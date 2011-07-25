@@ -1,3 +1,1 @@
-module Nim
-  # Your code goes here...
-end
+require 'nim/nim_core'
