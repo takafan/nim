@@ -1,0 +1,18 @@
+= Nim
+
+分成几摊的豆子，两个玩家轮流拣，一次可拿任意一摊里的至少一颗，拣掉最后一粒豆子的玩家判负。
+
+You and Q take turns nim beans from distinct heaps, 
+On each turn, you must nim at least one bean, and may nim any number of beans provided they all come from the same heap.
+
+Whom nim the last one bean were *lost*
+
+== Playing
+
+  gem install nim
+
+  nim
+
+== Authors
+
+* {Takafan}[http://hululuu.com]
