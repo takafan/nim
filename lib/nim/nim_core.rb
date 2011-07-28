@@ -1,7 +1,7 @@
 module Nim
   class Nim
 
-    #ÓÎÏ·¹æÔò£º·Ö³É¼¸Ì¯µÄ¶¹×Ó£¬Á½¸öÍæ¼ÒÂÖÁ÷¼ğ£¬Ò»´Î¿ÉÄÃÈÎÒâÒ»Ì¯ÀïµÄÖÁÉÙÒ»¿Å£¬¼ğµô×îºóÒ»Á£¶¹×ÓµÄÍæ¼ÒÅĞ¸º¡£ 
+    #æ¸¸æˆè§„åˆ™ï¼šåˆ†æˆå‡ æ‘Šçš„è±†å­ï¼Œä¸¤ä¸ªç©å®¶è½®æµæ‹£ï¼Œä¸€æ¬¡å¯æ‹¿ä»»æ„ä¸€æ‘Šé‡Œçš„è‡³å°‘ä¸€é¢—ï¼Œæ‹£æ‰æœ€åä¸€ç²’è±†å­çš„ç©å®¶åˆ¤è´Ÿã€‚ 
     
     def initialize
       puts %q{
@@ -109,7 +109,7 @@ Whom nim the last one bean were *lost*
     
     
     def ai_pick
-      #ĞĞ¶¯¼¯
+      #è¡ŒåŠ¨é›†
       actions = Hash.new
 
       @unsafe_positions.each do |unsafe|
@@ -123,7 +123,7 @@ Whom nim the last one bean were *lost*
           if idx
             dup.delete_at(idx)
           else
-            #Ôİ¼Ç²»ÏàµÈµÄvalueºÍËüµÄÏÂ±ê
+            #æš‚è®°ä¸ç›¸ç­‰çš„valueå’Œå®ƒçš„ä¸‹æ ‡
             scoped_index = i
             scoped_value = x
           end
@@ -134,22 +134,22 @@ Whom nim the last one bean were *lost*
         end
       end
       
-      #¼ğÈ¡µÄÏÂ±êºÍÊıÁ¿
+      #æ‹£å–çš„ä¸‹æ ‡å’Œæ•°é‡
       pos = num = 0
       
       if actions.size > 0
-        #Ëæ»úÌôÒ»¸öºòÑ¡Ö´ĞĞ
+        #éšæœºæŒ‘ä¸€ä¸ªå€™é€‰æ‰§è¡Œ
         keys = actions.keys
         pos = keys[Random.new.rand(0...keys.size)]
         num = actions[pos]
       else
-        #Öµ²»Îª0µÄÏÂ±ê¼¯
+        #å€¼ä¸ä¸º0çš„ä¸‹æ ‡é›†
         pos_ex = []
         @mat.each_with_index do |x, i|
           pos_ex << i if x > 0
         end
         
-        #´Ó²»Îª0µÄ¶ÑÖĞËæ»úÕÒÒ»¶Ñ£¬Ëæ»ú¼ğÈ¡n¿Å
+        #ä»ä¸ä¸º0çš„å †ä¸­éšæœºæ‰¾ä¸€å †ï¼Œéšæœºæ‹£å–né¢—
         pos = pos_ex[Random.new.rand(0...pos_ex.size)]
         num = Random.new.rand(1..@mat[pos])
       end
@@ -199,7 +199,7 @@ Whom nim the last one bean were *lost*
     
     def init_unsafe_positions
       @unsafe_positions = []
-      #³õÊ¼»¯Õó¼¯
+      #åˆå§‹åŒ–é˜µé›†
       arr = [] 
       for a in 0..@mat[0]
         for b in a..@mat[1]
@@ -217,7 +217,7 @@ Whom nim the last one bean were *lost*
       #first unsafe-position is [0,0,0,1]
       @unsafe_positions << arr.shift 
       
-      #´ÓĞ¡µ½´ó±éÀúÕó¼¯£¬Ôö¼Óunsafe
+      #ä»å°åˆ°å¤§éå†é˜µé›†ï¼Œå¢åŠ unsafe
       arr.each do |sample|
         is_safe = false
         
@@ -229,7 +229,7 @@ Whom nim the last one bean were *lost*
             dup.delete_at(j) if j
           end
           
-          #ÓĞÒ»¶Ñ¶¹×ÓÊı²»ÏàµÈ(¶à³ö) => ¿ÉÒÔÄÃ³ÉÒ»ÖÖunsafe => ÊÇ°²È«µÄ
+          #æœ‰ä¸€å †è±†å­æ•°ä¸ç›¸ç­‰(å¤šå‡º) => å¯ä»¥æ‹¿æˆä¸€ç§unsafe => æ˜¯å®‰å…¨çš„
           if dup.size == 1
             is_safe = true
             break
