@@ -8,9 +8,8 @@ require 'nim/version'
 begin
   raise Nim::VERSION if ['--version', '-v'].include? ARGV[0]
 
-  nim = Nim::Nim.new
-  nim.unsafe_positions{|x| puts x.join ' '}
-  
+  Nim::Nim.new
+
 rescue Exception => e
   print "#{e.class}: " unless e.class == RuntimeError
   puts "#{e.message}"
