@@ -6,11 +6,11 @@ Gem::Specification.new do |s|
   s.name        = "nim"
   s.version     = Nim::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["TODO: Write your name"]
-  s.email       = ["TODO: Write your email address"]
-  s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.authors     = ["takafan"]
+  s.email       = ["takafan@163.com"]
+  s.homepage    = "http://github.com/takafan/nim"
+  s.summary     = %q{Nim}
+  s.description = %q{play nim game with Q, Whom nim the last one bean were *lost*}
 
   s.rubyforge_project = "nim"
 
