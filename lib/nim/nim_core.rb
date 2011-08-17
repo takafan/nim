@@ -26,7 +26,7 @@ Whom nim the last one bean were *lost*
           @mat = heap == 1 ? a : b
           break 
         end
-        puts %q{    input: 1 or 2
+        puts %q{    inputs: 1 or 2
 }
       end
       
@@ -43,7 +43,7 @@ Whom nim the last one bean were *lost*
         else
           hand = g.to_i
           break if [1,2].include?(hand)
-          puts %q{    input: 1 or 2
+          puts %q{    inputs: 1 or 2
 }
         end
       end
