@@ -19,9 +19,9 @@ Whom nim the last one bean were *lost*
       puts "heap 2 (#{b.inject{|x, sum| x + sum}} beans)"
       draw0(b)
       
-      while true
+      loop do
         print 'choose the heap 1/2: '
-        heap = STDIN.gets.to_i
+        heap = gets.to_i
         if [1,2].include?(heap)
           @mat = heap == 1 ? a : b
           break 
@@ -32,14 +32,16 @@ Whom nim the last one bean were *lost*
       
       init_unsafe_positions
       
-      while true
+      hand = 1
+      
+      loop do
         print 'nim first or second 1/2: '
-        gets = STDIN.gets
-        if gets.strip == "unsafe"
+        g = gets
+        if g.strip == "unsafe"
           @unsafe_positions.each{|x| puts x.join ' '}
           draw_mat
         else
-          hand = gets.to_i
+          hand = g.to_i
           break if [1,2].include?(hand)
           puts %q{    input: 1 or 2
 }
@@ -49,11 +51,11 @@ Whom nim the last one bean were *lost*
       
       ai_pick if hand == 2
       
-      while true
+      loop do
       
-        while true
+        loop do
           print 'you nim: '
-          args = STDIN.gets.split ' '
+          args = gets.split ' '
           
           if args.size == 1
             iarg0 = args[0].to_i
@@ -80,16 +82,16 @@ Whom nim the last one bean were *lost*
             if iarg0 > 0 and iarg0 < 10 and iarg1 > 0 and iarg1 < 10  #4 5
               pos = iarg0 -1
               num = iarg1
-              if (1...@mat.size).include?(pos) and @mat[pos] >= num
+              if (0...@mat.size).include?(pos) and @mat[pos] >= num
                 pick(pos, num)
                 break
               end
             end
           end
-          puts %q{    invalid arguments.
+          puts %q{    invalid inputs.
     nim least 1 beans from a line.
-    nim 5 beans from line 4, input: 45 or 4 5
-    nim all beans from line 4, input: 4
+    nim 5 beans from line 4, inputs: 45 or 4 5
+    nim all beans from line 4, inputs: 4
 }
         end
         
@@ -241,6 +243,10 @@ Whom nim the last one bean were *lost*
       
       puts
       draw_mat
+    end
+    
+    def gets
+      STDIN.gets
     end
     
   end
