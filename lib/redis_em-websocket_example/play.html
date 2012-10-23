@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>nim</title>
+  <script src="./jquery-1.8.2.min.js"></script>
+  <script>
+  $(function(){
+    if(!("WebSocket" in window)) {
+      $('#chat1').text("WebSocket NOT supported by your Browser!");
+      return;
+    }
+
+    var url = null;
+    var s = getParameterByName('s');
+    if(s == '')
+      s = 's1';
+    document.title = 'nim ' + s;
+    switch(s)
+    {
+      case 's1':
+        url = 'ws://localhost:8081';
+        break;
+      case 's2':
+        url = 'ws://localhost:8082';
+        break;
+      default:
+        url = 'ws://localhost:8081';
+        break;
+    }
+    var ws = new WebSocket(url);
+
+    var token = null;
+
+    // 登录
+    $('#login_button').click = function(){
+      ws.send({
+        'channel': 'auth',
+        'login':  $('#login_field').val(),
+        'pass': $('#password').val()
+      });
+    };
+
+    ws.onmessage = function(evt) { 
+      var data = JSON.parse(evt.data);
+      switch(data.channel)
+      {
+        case 'chat2.syspop': // 私聊新系统消息
+          
+          break;
+        case 'logined': // 登录成功
+          token = data.token;
+          $('#user').text(data.nickname);
+          popToChat1(data.nickname + ' logined.');
+          break;
+        case 'chat1.pop': // 公聊新消息
+          popToChat1(data.who + ': ' + data.say);
+          break;
+        case 'chat1.latest10': // 最新10条
+          $.each(data, function(who, say){
+            popToChat1(who + ': ' + say);
+          });
+          break;
+        case 'userlist': // 玩家列表
+          $.each(data, function(who, say){
+            popToChat1(who + ': ' + say);
+          });
+          break;
+      }
+    };
+
+    ws.onopen = function(open) {
+      // 最新10条
+      ws.send({
+        'channel': 'chat1.latest10'
+      });
+      // 玩家列表
+      ws.send({
+        'channel': 'userlist'
+      });
+      
+    };
+
+    ws.onclose = function(close) {
+      popToChat1('type:' + close.type 
+        + ', wasClean:' + close.wasClean 
+        + ', code:' + close.code 
+        + ', reason:' + close.reason);
+    };
+
+    ws.onerror = function(error) {
+      popToChat1('type:' + error.type);
+    };
+
+    
+  });
+
+  
+  function popToChat1(message)
+  {
+    var pre = document.createElement("p");
+    pre.style.wordWrap = "break-word";
+    pre.innerHTML = message;
+    $('#chat1').prepend(pre);
+  }
+
+  function getParameterByName(name)
+  {
+    name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+    var regexS = "[\\?&]" + name + "=([^&#]*)";
+    var regex = new RegExp(regexS);
+    var results = regex.exec(window.location.search);
+    if(results == null)
+      return "";
+    else
+      return decodeURIComponent(results[1].replace(/\+/g, " "));
+  }
+  </script>
+</head>
+<body>
+  <div id="user"></div>
+  <div id="chat1"></div>
+  <div id="userlist"></div>
+  <div id="login">
+    <input type="text" id="login_field" />
+    <input type="password" id="login_password" />
+    <input type="button" id="login_button" value="Sign in" />
+  </div>
+  <div id="signup">
+    <input type="text" id="user_login" />
+    <input type="password" id="user_password" />
+    <input type="password" id="user_email" />
+    <input type="button" id="signup_button" value="Create an account" />
+  </div>
+
+</body>
+</html>

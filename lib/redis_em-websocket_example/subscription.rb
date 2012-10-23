@@ -1,41 +1,46 @@
 require 'redis'
-require 'yajl'
 require 'em-websocket'
+require File.expand_path('../auth.rb', __FILE__)
 
-@redis = Redis.new(:host => '192.168.3.220', :port => 6379, password: 'jredis123456')
-@parser = Yajl::Parser.new
-SOCKETS = []
 
-# Creating a thread for the EM event loop
+
+@db1 = Redis.new(host: '192.168.3.220', port: 6379, password: 'jredis123456')
+
+@host_and_ports = {
+  s1: {host: '0.0.0.0', port: 8081},
+  s2: {host: '0.0.0.0', port: 8082}
+}
+
+@sockets = {
+  s1: [],
+  s2: []
+}
+
 Thread.new do
-  EventMachine.run do
-    # Creates a websocket listener
-    EventMachine::WebSocket.start(:host => '0.0.0.0', :port => 8081) do |ws|
-      ws.onopen do
-        SOCKETS << ws
-        puts SOCKETS.size
-      end
-
-      ws.onclose do
-        SOCKETS.delete ws
-        puts SOCKETS.size
-      end
+  @db1.subscribe(@sockets.keys) do |on|
+    on.message do |s, msg|
+      puts "#{s} sending message: #{msg}"
+      @sockets[s.to_sym].each {|sock| sock.send msg}
     end
   end
 end
 
+@host_and_ports.each do |s, host_and_port|
+  Thread.new do
+    EventMachine.run do
+      EventMachine::WebSocket.start(host_and_port) do |ws|
+        ws.onopen do
+          @sockets[s.to_sym] << ws
+          puts "#{s} #{@sockets[s.to_sym].size}"
+        end
 
-# Creating a thread for the redis subscribe block
-Thread.new do
-  @redis.subscribe('ws') do |on|
-    # When a message is published to ws
-    on.message do |chan, msg|
-      puts "sending message: #{msg.class} #{msg}"
-      # Send out the message on each open socket
-      SOCKETS.each {|s| s.send msg.gsub(/\"/, "\\\"")}
+        ws.onclose do
+          @sockets[s.to_sym].delete ws
+          puts "#{s} #{@sockets[s.to_sym].size}"
+        end
+      end
     end
   end
 end
-
 
 sleep
