@@ -24,11 +24,9 @@
       case 's2':
         url = 'ws://localhost:8082';
         break;
-      default:
-        url = 'ws://localhost:8081';
-        break;
     }
     var ws = new WebSocket(url);
+    console.log(ws);
 
     var token = null;
 
@@ -45,39 +43,44 @@
       var data = JSON.parse(evt.data);
       switch(data.channel)
       {
-        case 'chat2.syspop': // 私聊新系统消息
-          
+        case 'syspop': // 新系统消息
+          popToChat2(data.say);
+          break;
+        case 'chat1.pop': // 公聊新消息
+          popToChat1(data.who + ': ' + data.say);
+          break;
+        case 'chat2.pop': // 私聊新消息
+          popToChat1(data.who + ': ' + data.say);
           break;
         case 'logined': // 登录成功
           token = data.token;
           $('#user').text(data.nickname);
           popToChat1(data.nickname + ' logined.');
           break;
-        case 'chat1.pop': // 公聊新消息
-          popToChat1(data.who + ': ' + data.say);
-          break;
-        case 'chat1.latest10': // 最新10条
-          $.each(data, function(who, say){
-            popToChat1(who + ': ' + say);
+        case 'userlist': // 玩家列表
+          var users = data.list;
+          $.each(users, function(i, user){
+            var pre = document.createElement("span");
+            pre.innerHTML = user.who;
+            $('#userlist').append(pre);
           });
           break;
-        case 'userlist': // 玩家列表
-          $.each(data, function(who, say){
-            popToChat1(who + ': ' + say);
+        case 'chat1.latest10': // 公聊最新10条
+          var messages = data.list;
+
+          $.each(messages, function(i, message){
+            popToChat1(message.who + ': ' + message.say);
           });
           break;
       }
     };
 
     ws.onopen = function(open) {
-      // 最新10条
-      ws.send({
-        'channel': 'chat1.latest10'
-      });
       // 玩家列表
-      ws.send({
-        'channel': 'userlist'
-      });
+      ws.send('userlist');
+      // 最新10条
+      ws.send('chat1.latest10');
+      
       
     };
 
@@ -98,10 +101,20 @@
   
   function popToChat1(message)
   {
+    popToChat('chat1', message)
+  }
+
+  function popToChat2(message)
+  {
+    popToChat('chat2', message)
+  }
+
+  function popToChat(id, message)
+  {
     var pre = document.createElement("p");
     pre.style.wordWrap = "break-word";
     pre.innerHTML = message;
-    $('#chat1').prepend(pre);
+    $('#' + id).append(pre);
   }
 
   function getParameterByName(name)
@@ -116,10 +129,39 @@
       return decodeURIComponent(results[1].replace(/\+/g, " "));
   }
   </script>
+
+  <style>
+
+  #chat1{
+    border: 1px solid #000;
+    /*height: 200px;
+    width: 300px;
+    display: inline-block;*/
+  }
+  #chat2{
+    border: 1px solid blue;
+    /*height: 200px;
+    width: 300px;
+    display: inline-block;*/
+  }
+  .container-right {
+    float:left;
+    padding-bottom: 10px;
+    width: 100px;
+  }
+  .container-left {  
+    float:left;  
+    padding-bottom: 10px;
+    width: 100px;
+  }
+  </style>
 </head>
 <body>
   <div id="user"></div>
-  <div id="chat1"></div>
+
+  <div id="chat1" class="container-left"></div>
+  <div id="chat2" class="container-right"></div>
+
   <div id="userlist"></div>
   <div id="login">
     <input type="text" id="login_field" />
