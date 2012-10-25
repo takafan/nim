@@ -1,6 +1,5 @@
 require 'openssl'
-
-SECRET_TOKEN = '01deb307d607be74aeed7253da70c95acde4c0b516abd878c74b48f47520421d28c63eb2e0285d879e8c2b86a9125e8632b52398c1a161f427921f6a91549e8c'
+require File.expand_path('../config/secret_token.rb', __FILE__)
 
 @digest  = OpenSSL::Digest::SHA256.new
 @user1 = {

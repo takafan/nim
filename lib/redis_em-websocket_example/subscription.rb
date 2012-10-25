@@ -1,11 +1,7 @@
-require 'redis'
-require 'em-websocket'
-require File.expand_path('../auth.rb', __FILE__)
+require File.expand_path('../app.rb', __FILE__)
 require File.expand_path('../handler.rb', __FILE__)
 
 include Handler
-
-@db1 = Redis.new(host: '192.168.3.220', port: 6379, password: 'jredis123456')
 
 @host_and_ports = {
   s1: %w(0.0.0.0 8081),
@@ -19,7 +15,7 @@ include Handler
 
 
 Thread.new do
-  @db1.subscribe(@sockets.keys) do |on|
+  @redis.subscribe(@sockets.keys) do |on|
     on.message do |s, msg|
       puts "#{s} sending message: #{msg}"
       @sockets[s.to_sym].each {|key, sock| sock.send msg}
@@ -42,9 +38,9 @@ end
           puts "#{s} #{@sockets[s.to_sym].size}"
         end
 
-        ws.onmessage do |msg|
-          puts "Recieved message: #{msg}"
-          res = handle(msg)
+        ws.onmessage do |evt|
+          puts "Recieved message: #{evt}"
+          res = handle(evt)
           puts res
           ws.send res
         end

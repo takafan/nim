@@ -2,4 +2,6 @@
 .bundle
 Gemfile.lock
 pkg/*
-*.komodoproject
+secret_token.rb
+database.yml
+configurations.yml
