@@ -11,11 +11,8 @@ $(function(){
     return;
   }
 
-  var url = null;
+  var url;
   var s = getParameterByName('s');
-  if(s == '')
-    s = 's1';
-  document.title = 'nim ' + s;
   switch(s)
   {
     case 's1':
@@ -24,50 +21,63 @@ $(function(){
     case 's2':
       url = 'ws://localhost:8082';
       break;
+    default:
+      url = 'ws://localhost:8081';
+      break;
   }
   var ws = new WebSocket(url);
-  console.log(ws);
 
   var token = null;
 
   // 登录
-  $('#login_button').click = function(){
+  $('#login_button').click(function(){
     ws.send(JSON.stringify({
       action: 'login',
       login: $('#login_field').val(),
-      pass: $('#password').val()
+      pass: $('#login_password').val()
     }));
-  };
+  });
+
+  // 注册
+  $('#signup_button').click(function(){
+    ws.send(JSON.stringify({
+      action: 'signup',
+      login: $('#user_login').val(),
+      pass: $('#user_password').val(),
+      email: $('#user_email').val()
+    }));
+  });
 
   ws.onmessage = function(evt) { 
+
     var data = JSON.parse(evt.data);
-    switch(data.channel)
-    {
-      case 'syspop': // 新系统消息
-        popToChat2(data.say);
-        break;
-      case 'chat1.pop': // 公聊新消息
-        popToChat1(data.who + ': ' + data.say);
-        break;
-      case 'chat2.pop': // 私聊新消息
-        popToChat1(data.who + ': ' + data.say);
-        break;
-      case 'logined': // 登录成功
-        token = data.token;
-        $('#user').text(data.nickname);
-        popToChat1(data.nickname + ' logined.');
-        break;
-      case 'userlist': // 玩家列表
-        addToUserlist(data.list);
-        break;
+    if(data) {
+      switch(data.action) {
+        case 'syspop': // 新系统消息
+          popToChat2(data.message);
+          break;
+        case 'chat1pop': // 公聊新消息
+          popToChat1(data.who + ': ' + data.say);
+          break;
+        case 'chat2pop': // 私聊新消息
+          popToChat1(data.who + ': ' + data.say);
+          break;
+        case 'login': // 登录成功
+          
+          //token = data.token;
+          //$('#user').text(data.nickname);
+          popToChat2(data.message);
+          break;
+        case 'enter_hall': // 进入大厅
+          document.title = data.title;
+          //addToUserlist(data.users);
+          break;
+      }
     }
   };
 
   ws.onopen = function(open) {
-    // 玩家列表
-    ws.send('userlist');
-    
-    
+    console.log(ws);
   };
 
   ws.onclose = function(close) {
@@ -166,7 +176,7 @@ function getParameterByName(name)
     <div id="signup">
       <input type="text" id="user_login" />
       <input type="password" id="user_password" />
-      <input type="password" id="user_email" />
+      <input type="text" id="user_email" />
       <input type="button" id="signup_button" value="Create an account" />
     </div>
   </div>
