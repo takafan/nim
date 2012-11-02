@@ -33,7 +33,7 @@ $(function(){
   $('#login_button').click(function(){
     ws.send(JSON.stringify({
       action: 'login',
-      login: $('#login_field').val(),
+      username: $('#login_username').val(),
       pass: $('#login_password').val()
     }));
   });
@@ -42,9 +42,9 @@ $(function(){
   $('#signup_button').click(function(){
     ws.send(JSON.stringify({
       action: 'signup',
-      login: $('#user_login').val(),
-      pass: $('#user_password').val(),
-      email: $('#user_email').val()
+      username: $('#username').val(),
+      pass: $('#password').val(),
+      email: $('#email').val()
     }));
   });
 
@@ -57,16 +57,18 @@ $(function(){
           popToChat2(data.message);
           break;
         case 'chat1pop': // 公聊新消息
-          popToChat1(data.who + ': ' + data.say);
+          popToChat1(data.username + ': ' + data.message);
           break;
         case 'chat2pop': // 私聊新消息
-          popToChat1(data.who + ': ' + data.say);
+          popToChat2(data.username + ': ' + data.message);
           break;
-        case 'login': // 登录成功
-          
-          //token = data.token;
-          //$('#user').text(data.nickname);
-          popToChat2(data.message);
+        case 'login.ok': // 登录成功 { username: user.username }
+          $('#user').text(data.username);
+          popToChat2('登录成功');
+          break;
+        case 'signup.ok': // 注册成功 { username: user.username }
+          $('#user').text(data.username);
+          popToChat2('注册成功');
           break;
         case 'enter_hall': // 进入大厅
           document.title = data.title;
@@ -144,13 +146,13 @@ function getParameterByName(name)
   width: 250px;
   height: 200px;
 }
-.left-float{
+.left-f{
   float:left;
 }
-.black-bolder{
+.black-b{
   border: 1px solid #000;
 }
-.blue-bolder{
+.blue-b{
   border: 1px solid #00f;
 }
 .chat {
@@ -164,19 +166,19 @@ function getParameterByName(name)
   <div id="container">
     <div id="user"></div>
 
-    <div id="chat1" class="chat black-bolder left-float"></div>
-    <div id="chat2" class="chat blue-bolder left-float"></div>
+    <div id="chat1" class="chat black-b left-f"></div>
+    <div id="chat2" class="chat blue-b left-f"></div>
 
-    <div id="userlist" class="black-bolder left-float"></div>
+    <div id="userlist" class="black-b left-f"></div>
     <div id="login">
-      <input type="text" id="login_field" />
+      <input type="text" id="login_username" />
       <input type="password" id="login_password" />
       <input type="button" id="login_button" value="Sign in" />
     </div>
     <div id="signup">
-      <input type="text" id="user_login" />
-      <input type="password" id="user_password" />
-      <input type="text" id="user_email" />
+      <input type="text" id="username" />
+      <input type="password" id="password" />
+      <input type="text" id="email" />
       <input type="button" id="signup_button" value="Create an account" />
     </div>
   </div>
