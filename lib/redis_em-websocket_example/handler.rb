@@ -10,12 +10,12 @@ module Handler
     begin
       res = case msg['action']
       when 'login'  # 登录
-        handle_login(msg)
+        handle_login(wskey, msg)
       when 'signup' # 注册
-        handle_signup(msg)
+        handle_signup(wskey, msg)
       end
     rescue RuntimeError => e
-      return syspop(e.message)
+      return notice(e.message)
     end
     
     res.nil? ? nil : encode({action: msg['action'] + '.ok'}.merge(res))
@@ -35,6 +35,10 @@ module Handler
     syspop(@configurations['app']['greeting'])
   end
 
+  def notice(msg)
+    encode({action: 'notice', message: msg})
+  end
+
   def syspop(msg)
     encode({action: 'syspop', message: msg})
   end
@@ -44,20 +48,23 @@ module Handler
     Yajl::Encoder.encode(hash)
   end
 
-  def handle_login(msg)
+  def handle_login(wskey, msg)
     user = User.find_by_username(msg['username'])
-    if user and user.cpass == OpenSSL::HMAC.hexdigest('sha256', user.salt, msg['pass'])
-      { username: user.username }
-    else
+    if user.nil? or user.cpass != OpenSSL::HMAC.hexdigest('sha256', user.salt, msg['pass'])
       raise 'Incorrect username or password. '
     end
+    
+    @onlines[wskey] = user.username
+    puts "o#{@onlines.size}"
+    
+    { username: user.username }
   end
 
-  def handle_signup(msg)
+  def handle_signup(wskey, msg)
     errs = []
     if msg['username'].nil? or msg['username'].strip.empty? or msg['username'] !~ /\A[^_][A-Za-z0-9_]?+\z/
       errs << 'Username may only contain alphanumeric characters or dashes and cannot begin with a dash' 
-    elsif User.find_by_login(msg['username'])
+    elsif User.find_by_username(msg['username'])
       errs << 'Username is already taken.'
     end
     if msg['email'] and !msg['email'].empty? 

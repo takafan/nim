@@ -3,7 +3,9 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>nim</title>
+<link href="./jquery.notice.css" rel="stylesheet" type="text/css" />
 <script src="./jquery-1.8.2.min.js"></script>
+<script src="./jquery.notice.js"></script>
 <script>
 $(function(){
   if(!("WebSocket" in window)) {
@@ -56,6 +58,9 @@ $(function(){
         case 'syspop': // 新系统消息
           popToChat2(data.message);
           break;
+        case 'notice': // 新系统消息
+          $.noticeAdd({text: data.message});
+          break;
         case 'chat1pop': // 公聊新消息
           popToChat1(data.username + ': ' + data.message);
           break;
@@ -68,9 +73,9 @@ $(function(){
           break;
         case 'signup.ok': // 注册成功 { username: user.username }
           $('#user').text(data.username);
-          popToChat2('注册成功');
+          jQuery.noticeAdd({text: '注册成功'});
           break;
-        case 'enter_hall': // 进入大厅
+        case 'enterhall': // 进入大厅
           document.title = data.title;
           //addToUserlist(data.users);
           break;
@@ -146,6 +151,9 @@ function getParameterByName(name)
   width: 250px;
   height: 200px;
 }
+#notice{
+  display: none;
+}
 .left-f{
   float:left;
 }
@@ -164,12 +172,6 @@ function getParameterByName(name)
 </head>
 <body>
   <div id="container">
-    <div id="user"></div>
-
-    <div id="chat1" class="chat black-b left-f"></div>
-    <div id="chat2" class="chat blue-b left-f"></div>
-
-    <div id="userlist" class="black-b left-f"></div>
     <div id="login">
       <input type="text" id="login_username" />
       <input type="password" id="login_password" />
@@ -181,6 +183,13 @@ function getParameterByName(name)
       <input type="text" id="email" />
       <input type="button" id="signup_button" value="Create an account" />
     </div>
+    <div id="user"></div>
+
+    <div id="chat1" class="chat black-b left-f"></div>
+    <div id="chat2" class="chat blue-b left-f"></div>
+
+    <div id="userlist" class="black-b left-f"></div>
+    
   </div>
 </body>
 </html>
