@@ -5,20 +5,18 @@ require File.expand_path('../models/user.rb', __FILE__)
 
 module Handler
   
-  def handle(wskey, evt)
+  def handle(ws, evt)
     msg = Yajl::Parser.parse(evt)
     begin
-      res = case msg['action']
-      when 'login'  # 登录
-        handle_login(wskey, msg)
-      when 'signup' # 注册
-        handle_signup(wskey, msg)
+      case msg['action']
+      when 'login'  
+        handle_login(ws, msg)
+      when 'signup' 
+        handle_signup(ws, msg)
       end
     rescue RuntimeError => e
-      return notice(e.message)
+      ws.send notice(e.message)
     end
-    
-    res.nil? ? nil : encode({action: msg['action'] + '.ok'}.merge(res))
   end
 
   def load_hall
@@ -48,44 +46,90 @@ module Handler
     Yajl::Encoder.encode(hash)
   end
 
-  def handle_login(wskey, msg)
-    user = User.find_by_username(msg['username'])
-    if user.nil? or user.cpass != OpenSSL::HMAC.hexdigest('sha256', user.salt, msg['pass'])
-      raise 'Incorrect username or password. '
-    end
-    
-    @onlines[wskey] = user.username
-    puts "o#{@onlines.size}"
-    
-    { username: user.username }
+  # 广播在线用户
+  def send2onlines(hash)
+    @sockets.select{|s, u| u}.each{|s, u| sock.send encode(hash)}
   end
 
-  def handle_signup(wskey, msg)
-    errs = []
-    if msg['username'].nil? or msg['username'].strip.empty? or msg['username'] !~ /\A[^_][A-Za-z0-9_]?+\z/
-      errs << 'Username may only contain alphanumeric characters or dashes and cannot begin with a dash' 
-    elsif User.find_by_username(msg['username'])
-      errs << 'Username is already taken.'
-    end
-    if msg['email'] and !msg['email'].empty? 
-      if msg['email'] !~ /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/ or User.find_by_email(msg['email'])
-        errs << 'Email is invalid or already taken'
-      end
-    end
-    raise errs.join('\n') if errs.size > 0
+  # 绑定用户到socket对象
+  def bind_socket(ws, user=nil)
+    @sockets[ws] = user.username
+    puts "o#{@sockets.values.select{|u| u}.size} s#{@sockets.size}"
 
+    bc = {
+      action: 'userlist.add',
+      username: user.username 
+    }
+    send2onlines(bc)
+    puts "send2onlines: #{res}"
+  end
+
+  # 登录
+  def handle_login(ws, msg)
+    user = User.find_by_username(msg['username'])
+    # 验证
+    raise 'Incorrect username or password. ' if user.nil? or user.cpass != OpenSSL::HMAC.hexdigest('sha256', user.salt, msg['pass'])
+
+    # 响应
+    res = { 
+      action: 'login.ok',
+      username: user.username
+    }
+    ws.send encode(res)
+    puts "send: #{res}"
+
+    # ws.request['sec-websocket-key']
+    bind_socket(ws, user)
+  end
+
+  # 退出
+  def handle_logout(ws)
+    @sockets[ws] = nil
+
+    # 响应
+    res = { 
+      action: 'logout.ok'
+    }
+    ws.send encode(res)
+    puts "send: #{res}"
+
+    bind_socket(ws, user)
+  end
+
+  # 注册
+  def handle_signup(ws, msg)
+    # 验证
+    raise 'Please enter your Username' if msg['username'].nil? or msg['username'].strip.empty? 
+    username = CGI::escapeHTML(msg['username'].strip)
+    raise 'This username is already in use, please pick another one' if User.find_by_username(username)
+
+    raise 'Please enter your Password' if msg['pass'].nil? or msg['pass'].empty? 
+    pass = CGI::escapeHTML(msg['pass'])
+    raise 'The Password is too short' if pass.size <= 1
+
+    email = CGI::escapeHTML(msg['email'].strip) if msg['email'] and !msg['email'].strip.empty?
+
+    # 创建用户
     key = SecureRandom.hex
-    cpass = OpenSSL::HMAC.hexdigest('sha256', key, msg['pass'])
+    cpass = OpenSSL::HMAC.hexdigest('sha256', key, pass)
     user = User.create!(
-      username: msg['username'],
+      username: username,
       salt: key,
       cpass: cpass,
-      email: msg['email']
+      email: email
     )
-    @onlines[wskey] = user.username
-    puts "o#{@onlines.size}"
-    
-    { username: user.username }
+
+    # 响应
+    res = {
+      action: 'signup.ok',
+      username: user.username
+    }
+    ws.send encode(res)
+    puts "send: #{res}"
+
+    bind_socket(ws, user)
   end
+
+  
 
 end
