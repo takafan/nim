@@ -51,14 +51,24 @@ module Handler
     @sockets.select{|s, u| u}.each{|s, u| sock.send encode(hash)}
   end
 
-  # 绑定用户到socket对象
+  # 绑socket对象
   def bind_socket(ws, user=nil)
-    @sockets[ws] = user.username
+    if user
+      # 绑定用户
+      action = 'userlist.add'
+      username = user.username
+      @sockets[ws] = user.username
+    else
+      # 释放用户
+      action = 'userlist.del'
+      username = @sockets[ws]
+      @sockets[ws] = nil
+    end
     puts "o#{@sockets.values.select{|u| u}.size} s#{@sockets.size}"
 
     bc = {
-      action: 'userlist.add',
-      username: user.username 
+      action: action,
+      username: username 
     }
     send2onlines(bc)
     puts "send2onlines: #{res}"
@@ -70,6 +80,9 @@ module Handler
     # 验证
     raise 'Incorrect username or password. ' if user.nil? or user.cpass != OpenSSL::HMAC.hexdigest('sha256', user.salt, msg['pass'])
 
+    # 绑socket
+    bind_socket(ws, user)
+
     # 响应
     res = { 
       action: 'login.ok',
@@ -77,14 +90,12 @@ module Handler
     }
     ws.send encode(res)
     puts "send: #{res}"
-
-    # ws.request['sec-websocket-key']
-    bind_socket(ws, user)
   end
 
   # 退出
   def handle_logout(ws)
-    @sockets[ws] = nil
+    # 绑socket
+    bind_socket(ws, nil)
 
     # 响应
     res = { 
@@ -92,8 +103,6 @@ module Handler
     }
     ws.send encode(res)
     puts "send: #{res}"
-
-    bind_socket(ws, user)
   end
 
   # 注册
@@ -119,6 +128,9 @@ module Handler
       email: email
     )
 
+    # 绑socket
+    bind_socket(ws, user)
+
     # 响应
     res = {
       action: 'signup.ok',
@@ -126,8 +138,6 @@ module Handler
     }
     ws.send encode(res)
     puts "send: #{res}"
-
-    bind_socket(ws, user)
   end
 
   
