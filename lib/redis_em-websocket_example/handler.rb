@@ -4,13 +4,16 @@ require 'securerandom'
 require File.expand_path('../models/user.rb', __FILE__)
 
 module Handler
-  
+  # 处理事件
   def handle(ws, evt)
+    puts "evt: #{evt}"
     msg = Yajl::Parser.parse(evt)
     begin
       case msg['action']
       when 'login'  
         handle_login(ws, msg)
+      when 'logout'  
+        handle_logout(ws)
       when 'signup' 
         handle_signup(ws, msg)
       end
@@ -19,24 +22,26 @@ module Handler
     end
   end
 
-  def load_hall
-    encode({
-      action: 'load_hall', 
-      userlist: [
-        {name: 'taka'},
-        {name: 'kimokbin'}
-      ]
-    })
+  def init_ws(ws)
+    # 加入sockets
+    @sockets[ws] = nil
+
+    # 响应
+    res = {
+      action: 'initialize', 
+      message: @configurations['app']['greeting'],
+      title: @configurations['ws']['title']
+    }
+    ws.send encode(res)
+    puts "send: #{res}"
   end
 
-  def greeting
-    syspop(@configurations['app']['greeting'])
-  end
-
+  # 弹框消息
   def notice(msg)
     encode({action: 'notice', message: msg})
   end
 
+  # 私聊消息
   def syspop(msg)
     encode({action: 'syspop', message: msg})
   end
@@ -51,8 +56,8 @@ module Handler
     @sockets.select{|s, u| u}.each{|s, u| sock.send encode(hash)}
   end
 
-  # 绑socket对象
-  def bind_socket(ws, user=nil)
+  # 绑用户
+  def bind_user(ws, user=nil)
     if user
       # 绑定用户
       action = 'userlist.add'
@@ -80,13 +85,14 @@ module Handler
     # 验证
     raise 'Incorrect username or password. ' if user.nil? or user.cpass != OpenSSL::HMAC.hexdigest('sha256', user.salt, msg['pass'])
 
-    # 绑socket
-    bind_socket(ws, user)
+    # 绑用户
+    bind_user(ws, user)
 
     # 响应
     res = { 
       action: 'login.ok',
-      username: user.username
+      username: user.username,
+      userlist: @sockets.values.select{|u| u}
     }
     ws.send encode(res)
     puts "send: #{res}"
@@ -94,8 +100,8 @@ module Handler
 
   # 退出
   def handle_logout(ws)
-    # 绑socket
-    bind_socket(ws, nil)
+    # 解绑用户
+    bind_user(ws, nil)
 
     # 响应
     res = { 
@@ -128,8 +134,8 @@ module Handler
       email: email
     )
 
-    # 绑socket
-    bind_socket(ws, user)
+    # 绑用户
+    bind_user(ws, user)
 
     # 响应
     res = {

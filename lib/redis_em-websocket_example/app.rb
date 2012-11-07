@@ -4,8 +4,7 @@ require File.expand_path('../config/initializers/establish_connection.rb', __FIL
 require File.expand_path('../config/initializers/redis.rb', __FILE__)
 require File.expand_path('../handler.rb', __FILE__)
 
-@sockets = {} # ws: username # wskey: ws
-@onlines = {} # wskey: login
+@sockets = {} # ws: username
 
 include Handler
 
@@ -22,9 +21,7 @@ Thread.new do
     ws_conf = @configurations['ws']
     EventMachine::WebSocket.start(host: ws_conf['host'], port: ws_conf['port'], debug: ARGV.shift == 'debug') do |ws|
       ws.onopen do
-        @sockets[ws] = nil
-        puts "o#{@sockets.values.select{|u| u}.size} s#{@sockets.size}"
-        ws.send greeting
+        init_ws(ws)
       end
 
       ws.onclose do
@@ -33,8 +30,7 @@ Thread.new do
       end
 
       ws.onmessage do |evt|
-        puts "evt: #{evt}"
-        handle(ws.request['sec-websocket-key'], evt)
+        handle(ws, evt)
       end
 
       ws.onerror do |error|
